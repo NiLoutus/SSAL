@@ -150,10 +150,6 @@ class CRCClassifier(nn.Module):
 
 model = CRCClassifier().to(device)
 
-
-# In[ ]:
-
-
 criterion = nn.CrossEntropyLoss()
 num_epochs = 100
 curr_percentage = 0.01
@@ -162,117 +158,92 @@ max_val_accs = []
 min_val_losses = []
 min_epoch_losses = []
 
-for i in range(41,51):#Loop to run 50 times - 1 for 1% of the train dataset
-    curr_train_data_len = int(len(train_subset)*curr_percentage*i)
-    print(f'Currently {curr_percentage*i*100}% of the train data is being used')
-    indices = torch.randperm(len(train_subset))[:curr_train_data_len]
-    curr_train_data = Subset(train_subset, indices)
-    train_loader = DataLoader(curr_train_data, batch_size=40, shuffle=True, num_workers=2)
-    val_loader = DataLoader(test_subset, batch_size=40, shuffle=False)
-    model = CRCClassifier().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2, weight_decay=1e-4)
-    epoch_accs = []
-    epoch_losses = []
-    validation_accs = []
-    validation_losses = []
-    for epoch in range(num_epochs):
-        model.train()  # Set model to training mode
-        running_loss = 0.0
-        running_corrects = 0
-        
-        for inputs, labels in train_loader:
-            optimizer.zero_grad()
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
 
-            _, preds = torch.max(outputs, 1)
-            running_loss += loss.item() * inputs.size(0)
-            running_corrects += torch.sum(preds == labels.data)
-
-        epoch_loss = running_loss / len(curr_train_data)
-        epoch_acc = running_corrects.double() / len(curr_train_data)
-        epoch_accs.append(epoch_acc.item())
-        epoch_losses.append(epoch_loss)
-        
-      # Validation phase
-        model.eval()  # Set model to evaluate mode
-        val_loss = 0.0
-        val_corrects = 0
-        
-        with torch.no_grad():
-            for inputs, labels in val_loader:
+if __name__ == "__main__":
+    for i in range(41,51): #Loop to run 50 times - 1 for 1% of the train dataset
+        curr_train_data_len = int(len(train_subset)*curr_percentage*i)
+        print(f'Currently {curr_percentage*i*100}% of the train data is being used')
+        indices = torch.randperm(len(train_subset))[:curr_train_data_len]
+        curr_train_data = Subset(train_subset, indices)
+        train_loader = DataLoader(curr_train_data, batch_size=40, shuffle=True, num_workers=2)
+        val_loader = DataLoader(test_subset, batch_size=40, shuffle=False)
+        model = CRCClassifier().to(device)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-2, weight_decay=1e-4)
+        epoch_accs = []
+        epoch_losses = []
+        validation_accs = []
+        validation_losses = []
+        for epoch in range(num_epochs):
+            model.train()  # Set model to training mode
+            running_loss = 0.0
+            running_corrects = 0
+            
+            for inputs, labels in train_loader:
+                optimizer.zero_grad()
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
-
+                loss.backward()
+                optimizer.step()
+    
                 _, preds = torch.max(outputs, 1)
-                val_loss += loss.item() * inputs.size(0)
-                val_corrects += torch.sum(preds == labels.data)
-                
-    val_loss = val_loss / len(test_subset)
-    val_acc = val_corrects.double() / len(test_subset)
-    validation_losses.append(val_loss)
-    validation_accs.append(val_acc.item())
-    max_epoch_idx = np.argmax(epoch_accs)
-    max_val_idx = np.argmax(validation_accs)
-    print(f' Epoch Loss: {epoch_losses[max_epoch_idx]}, Max Epoch Acc: {epoch_accs[max_epoch_idx]}')
-    print(f'Max Validation Loss: {validation_losses[max_val_idx]}, Max Validation Acc: {validation_accs[max_val_idx]}')
-    max_epoch_accs.append(epoch_accs[max_epoch_idx])
-    max_val_accs.append(validation_accs[max_val_idx])
-    min_epoch_losses.append(epoch_losses[max_epoch_idx])
-    min_val_losses.append(validation_losses[max_val_idx])
-    with open('sup_val_losses.txt','a+') as f:
-        for val in min_val_losses:
-            f.write(f'{val}\n')
-    f.close()
-
-    with open('sup_epoch_losses.txt','a+') as f:
-        for val in min_epoch_losses:
-            f.write(f'{val}\n')
-    f.close()
-
-    with open('sup_val_accs.txt','a+') as f:
-        for val in max_val_accs:
-            f.write(f'{val}\n')
-    f.close()
-
-    with open('sup_epoch_accs.txt','a+') as f:
-        for val in max_epoch_accs:
-            f.write(f'{val}\n')
-    f.close()
-
-
-# In[15]:
-
-
-with open('sup_val_losses.txt','w') as f:
-    for val in min_val_losses:
-        f.write(f'{val}\n')
-f.close()
-
-with open('sup_epoch_losses.txt','w') as f:
-    for val in min_epoch_losses:
-        f.write(f'{val}\n')
-f.close()
-
-with open('sup_val_accs.txt','w') as f:
-    for val in max_val_accs:
-        f.write(f'{val}\n')
-f.close()
-
-with open('sup_epoch_accs.txt','w') as f:
-    for val in max_epoch_accs:
-        f.write(f'{val}\n')
-f.close()
-
-
-# In[ ]:
-
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+    
+            epoch_loss = running_loss / len(curr_train_data)
+            epoch_acc = running_corrects.double() / len(curr_train_data)
+            epoch_accs.append(epoch_acc.item())
+            epoch_losses.append(epoch_loss)
+            
+          # Validation phase
+            model.eval()  # Set model to evaluate mode
+            val_loss = 0.0
+            val_corrects = 0
+            
+            with torch.no_grad():
+                for inputs, labels in val_loader:
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels)
+    
+                    _, preds = torch.max(outputs, 1)
+                    val_loss += loss.item() * inputs.size(0)
+                    val_corrects += torch.sum(preds == labels.data)
+                    
+        val_loss = val_loss / len(test_subset)
+        val_acc = val_corrects.double() / len(test_subset)
+        validation_losses.append(val_loss)
+        validation_accs.append(val_acc.item())
+        max_epoch_idx = np.argmax(epoch_accs)
+        max_val_idx = np.argmax(validation_accs)
+        print(f' Epoch Loss: {epoch_losses[max_epoch_idx]}, Max Epoch Acc: {epoch_accs[max_epoch_idx]}')
+        print(f'Max Validation Loss: {validation_losses[max_val_idx]}, Max Validation Acc: {validation_accs[max_val_idx]}')
+        max_epoch_accs.append(epoch_accs[max_epoch_idx])
+        max_val_accs.append(validation_accs[max_val_idx])
+        min_epoch_losses.append(epoch_losses[max_epoch_idx])
+        min_val_losses.append(validation_losses[max_val_idx])
+        with open('sup_val_losses.txt','a+') as f:
+            for val in min_val_losses:
+                f.write(f'{val}\n')
+        f.close()
+    
+        with open('sup_epoch_losses.txt','a+') as f:
+            for val in min_epoch_losses:
+                f.write(f'{val}\n')
+        f.close()
+    
+        with open('sup_val_accs.txt','a+') as f:
+            for val in max_val_accs:
+                f.write(f'{val}\n')
+        f.close()
+    
+        with open('sup_epoch_accs.txt','a+') as f:
+            for val in max_epoch_accs:
+                f.write(f'{val}\n')
+        f.close()
+    
 
 
 
