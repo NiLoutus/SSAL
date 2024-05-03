@@ -183,48 +183,37 @@ def nt_xent_loss(z_i, z_j, temperature = 0.07):
 
 # In[19]:
 
-
-# Initialize the model
-base_model = models.resnet18
-model = SimCLR(base_model).to(device)
-train_loader = DataLoader(train_subset, batch_size=32, shuffle=True, num_workers=2)
-
-# Define the optimizer and learning rate scheduler
-optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_subset), eta_min=0, last_epoch=-1)
-
-
-# In[21]:
-
-
-epochs = 100
-temperature = 0.07
-
-for epoch in range(epochs):
-    model.train()
-    total_loss = 0
-    for (img1, img2, label) in train_loader:
-        img1, img2 = img1.to(device), img2.to(device)
-
-        optimizer.zero_grad()
-
-        z_i = model(img1)
-        z_j = model(img2)
-
-        loss = nt_xent_loss(z_i, z_j, temperature)
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item()
-
-    scheduler.step()
-    print(f'Epoch [{epoch+1}/{epochs}], Loss: {total_loss/len(train_loader):.4f}')
-
-    # Optionally save your model here with torch.save
-
-
-# In[22]:
-
-
-torch.save(model.state_dict(), 'unsupervised.pth')
+if __name__ == "__main__":
+    base_model = models.resnet18
+    model = SimCLR(base_model).to(device)
+    train_loader = DataLoader(train_subset, batch_size=32, shuffle=True, num_workers=2)
+    
+    # Define the optimizer and learning rate scheduler
+    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_subset), eta_min=0, last_epoch=-1)
+    
+    epochs = 100
+    temperature = 0.07
+    
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        for (img1, img2, label) in train_loader:
+            img1, img2 = img1.to(device), img2.to(device)
+    
+            optimizer.zero_grad()
+    
+            z_i = model(img1)
+            z_j = model(img2)
+    
+            loss = nt_xent_loss(z_i, z_j, temperature)
+            loss.backward()
+            optimizer.step()
+    
+            total_loss += loss.item()
+    
+        scheduler.step()
+        print(f'Epoch [{epoch+1}/{epochs}], Loss: {total_loss/len(train_loader):.4f}')
+    
+    torch.save(model.state_dict(), 'unsupervised.pth')
 
