@@ -528,38 +528,38 @@ def active_sampling(model, unlabeled_subset, strategy = 'uncertainty', forward_p
     
     return indices
                 
-
-for i in range(5, 10):
-    set_seed(seed)
-    model = CRCClassifier().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2, weight_decay=1e-4)
-    criterion = nn.CrossEntropyLoss()
-    curr_train_data_portion = 0.01*i
-    print(f'Currently {curr_train_data_portion*100}% of the train data is being used')
-    if i == 5:
-        unlabeled_subset, labeled_subset = stratified_split(train_subset, test_size=curr_train_data_portion)
-        labeled_loader = DataLoader(labeled_subset, batch_size=batch_size, shuffle=True, num_workers=2)
-        unlabeled_loader = DataLoader(unlabeled_subset, batch_size=batch_size*ratio, shuffle=True, num_workers=2)
-        acc = train_fixmatch_multistep(model, labeled_loader, unlabeled_loader, optimizer, num_epochs, eval_step, threshold, lambda_u=1)
-        #torch.save(model.state_dict(), 'semi_5_percents_combined.pth')
-        indices = active_sampling(model, unlabeled_subset, 'combined')
-        labeled_subset = ConcatDataset([labeled_subset,Subset(unlabeled_subset, indices.tolist())])
-        all_indices = torch.arange(len(unlabeled_subset)).to(device)
-        mask = ~torch.isin(all_indices, indices)
-        indices_to_keep = all_indices[mask]
-        unlabeled_subset = Subset(dataset, indices_to_keep.tolist())
-    else:
-        labeled_loader = DataLoader(labeled_subset, batch_size=batch_size, shuffle=True, num_workers=2)
-        unlabeled_loader = DataLoader(unlabeled_subset, batch_size=batch_size*ratio, shuffle=True, num_workers=2)
-        acc = train_fixmatch_multistep(model, labeled_loader, unlabeled_loader, optimizer, num_epochs, eval_step, threshold, lambda_u=1)
-        indices = active_sampling(model, unlabeled_subset, 'combined')
-        labeled_subset = ConcatDataset([labeled_subset,Subset(unlabeled_subset, indices.tolist())])
-        all_indices = torch.arange(len(unlabeled_subset)).to(device)
-        mask = ~torch.isin(all_indices, indices)
-        indices_to_keep = all_indices[mask]
-        unlabeled_subset = Subset(dataset, indices_to_keep.tolist())
-    print(f'best_acc:{acc}')
-    with open('semi_val_accs_act_combined_0.05_3.txt','a+') as f:
-        f.write(f'{acc}\n')
-    f.close()
+if __name__ == "__main__":
+    for i in range(5, 10):
+        set_seed(seed)
+        model = CRCClassifier().to(device)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-2, weight_decay=1e-4)
+        criterion = nn.CrossEntropyLoss()
+        curr_train_data_portion = 0.01*i
+        print(f'Currently {curr_train_data_portion*100}% of the train data is being used')
+        if i == 5:
+            unlabeled_subset, labeled_subset = stratified_split(train_subset, test_size=curr_train_data_portion)
+            labeled_loader = DataLoader(labeled_subset, batch_size=batch_size, shuffle=True, num_workers=2)
+            unlabeled_loader = DataLoader(unlabeled_subset, batch_size=batch_size*ratio, shuffle=True, num_workers=2)
+            acc = train_fixmatch_multistep(model, labeled_loader, unlabeled_loader, optimizer, num_epochs, eval_step, threshold, lambda_u=1)
+            #torch.save(model.state_dict(), 'semi_5_percents_combined.pth')
+            indices = active_sampling(model, unlabeled_subset, 'combined')
+            labeled_subset = ConcatDataset([labeled_subset,Subset(unlabeled_subset, indices.tolist())])
+            all_indices = torch.arange(len(unlabeled_subset)).to(device)
+            mask = ~torch.isin(all_indices, indices)
+            indices_to_keep = all_indices[mask]
+            unlabeled_subset = Subset(dataset, indices_to_keep.tolist())
+        else:
+            labeled_loader = DataLoader(labeled_subset, batch_size=batch_size, shuffle=True, num_workers=2)
+            unlabeled_loader = DataLoader(unlabeled_subset, batch_size=batch_size*ratio, shuffle=True, num_workers=2)
+            acc = train_fixmatch_multistep(model, labeled_loader, unlabeled_loader, optimizer, num_epochs, eval_step, threshold, lambda_u=1)
+            indices = active_sampling(model, unlabeled_subset, 'combined')
+            labeled_subset = ConcatDataset([labeled_subset,Subset(unlabeled_subset, indices.tolist())])
+            all_indices = torch.arange(len(unlabeled_subset)).to(device)
+            mask = ~torch.isin(all_indices, indices)
+            indices_to_keep = all_indices[mask]
+            unlabeled_subset = Subset(dataset, indices_to_keep.tolist())
+        print(f'best_acc:{acc}')
+        with open('semi_val_accs_act_combined_0.05_3.txt','a+') as f:
+            f.write(f'{acc}\n')
+        f.close()
 
